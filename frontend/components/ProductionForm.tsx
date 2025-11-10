@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { LoadingSpinner } from "./LoadingSpinner";
 
 interface ProductionFormProps {
   onSubmit: (yesterday: number, today: number) => void;
@@ -70,9 +71,16 @@ export const ProductionForm = ({ onSubmit, isSubmitting = false }: ProductionFor
         <button
           type="submit"
           disabled={isSubmitting || !yesterdayValue || !todayValue}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center"
         >
-          {isSubmitting ? "Submitting..." : "Submit Production Data"}
+          {isSubmitting ? (
+            <>
+              <LoadingSpinner size="sm" className="mr-2" />
+              Submitting...
+            </>
+          ) : (
+            "Submit Production Data"
+          )}
         </button>
       </form>
     </div>
