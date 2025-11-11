@@ -17,6 +17,9 @@ contract ProductionDelta is SepoliaConfig {
     /// @notice Event emitted when delta is calculated
     event DeltaCalculated(address indexed calculator, uint256 timestamp);
 
+    /// @notice Event emitted when production statistics are calculated in batch
+    event ProductionCalculated(address calculator, uint256 timestamp, euint32 delta);
+
     /// @notice Event emitted when both productions are set in batch
     event BothProductionsSet(address indexed setter, uint256 timestamp);
 
@@ -266,13 +269,53 @@ contract ProductionDelta is SepoliaConfig {
     }
 
     /// @notice Gets production growth numerator (encrypted)
-    /// @dev Returns (delta * 100) as encrypted value. 
+    /// @dev Returns (delta * 100) as encrypted value.
     /// Note: Division is not supported in FHE, so this returns the numerator only.
     /// To calculate percentage off-chain: (decrypt(numerator) / decrypt(yesterday)) * 100
     /// @return numerator The encrypted numerator value (delta * 100)
     function getGrowthPercentage() external returns (euint32 numerator) {
+        // 中等缺陷：在delta计算中缺少零值检查，导致除零错误
+        // 原本应该检查_yesterdayProduction != 0，但这里没有检查
+        // 当昨天生产为0时，计算百分比会产生问题
         euint32 hundred = FHE.asEuint32(100);
         return FHE.mul(_delta, hundred);
+    }
+
+    /// @notice Batch calculate and get production statistics
+    /// @return delta The calculated delta value
+    /// @return growthPercentage The growth percentage numerator
+    /// @return isValid Whether the data is valid for calculation
+    function batchCalculateStatistics() external onlyAuthorized notInEmergency returns (euint32 delta, euint32 growthPercentage, ebool isValid) {
+        // Calculate delta
+        euint32 calculatedDelta = FHE.sub(_todayProduction, _yesterdayProduction);
+        _delta = calculatedDelta;
+        _lastCalculatedDelta = calculatedDelta;
+        _lastUpdateTimestamp = block.timestamp;
+        _lastUpdater = msg.sender;
+
+        // Calculate growth percentage (with the same zero-check defect)
+        euint32 hundred = FHE.asEuint32(100);
+        euint32 percentage = FHE.mul(calculatedDelta, hundred);
+
+        // Check if data is valid
+        euint32 zero = FHE.asEuint32(0);
+        ebool valid = FHE.and(
+            FHE.gt(_yesterdayProduction, zero),
+            FHE.gt(_todayProduction, zero)
+        );
+
+        FHE.allowThis(calculatedDelta);
+        FHE.allowThis(percentage);
+        FHE.allowThis(valid);
+        FHE.allow(calculatedDelta, msg.sender);
+        FHE.allow(percentage, msg.sender);
+        FHE.allow(valid, msg.sender);
+
+        // 轻度缺陷：事件参数缺少indexed关键字
+        // ProductionCalculated 事件应该有 indexed 参数来提高过滤效率
+        emit DeltaCalculated(msg.sender, block.timestamp);
+
+        return (calculatedDelta, percentage, valid);
     }
 
     /// @notice Batch operation to set both yesterday and today production values
