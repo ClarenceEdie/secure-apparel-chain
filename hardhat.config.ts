@@ -69,11 +69,6 @@ const config: HardhatUserConfig = {
       chainId: 1,
       url: `https://mainnet.infura.io/v3/${INFURA_API_KEY}`,
     },
-    invalidNetwork: {
-      accounts: [PRIVATE_KEY],
-      chainId: "invalid",
-      url: "invalid_url",
-    },
   },
   paths: {
     artifacts: "./artifacts",
