@@ -311,9 +311,9 @@ export const ProductionDeltaDemo = () => {
               </button>
             </div>
             <p className="text-2xl font-bold text-purple-700 mt-2">
-              {Number(productionDelta.clear) < 0
+              {Number(productionDelta.clear) > 0
                 ? `Today&apos;s production is ${productionDelta.clear.toString()} units higher than yesterday`
-                : Number(productionDelta.clear) > 0
+                : Number(productionDelta.clear) < 0
                   ? `Today&apos;s production is ${(-Number(productionDelta.clear)).toString()} units lower than yesterday`
                   : "Today&apos;s production matches yesterday&apos;s level"}
             </p>
