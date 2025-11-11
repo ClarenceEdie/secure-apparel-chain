@@ -78,7 +78,7 @@ export const useProductionDelta = (parameters: {
   const [clearDelta, setClearDelta] = useState<ClearValueType | undefined>(
     undefined
   );
-  const clearDeltaRef = useRef<ClearValueType | string>(undefined);
+  const clearDeltaRef = useRef<ClearValueType>(undefined);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [isDecrypting, setIsDecrypting] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
