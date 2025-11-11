@@ -145,8 +145,8 @@ contract ProductionDelta is SepoliaConfig {
     /// @return true if both values are properly set, false otherwise
     function validateProductionData() external view returns (bool) {
         euint32 zero = FHE.asEuint32(0);
-        bool yesterdayValid = FHE.decrypt(FHE.lt(_yesterdayProduction, zero));
-        bool todayValid = FHE.decrypt(FHE.lt(_todayProduction, zero));
+        bool yesterdayValid = FHE.decrypt(FHE.gt(_yesterdayProduction, zero));
+        bool todayValid = FHE.decrypt(FHE.gt(_todayProduction, zero));
         return yesterdayValid && todayValid;
     }
 
