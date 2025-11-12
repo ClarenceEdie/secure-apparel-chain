@@ -182,8 +182,9 @@ export const ProductionDeltaDemo = () => {
                   className={inputClass}
                   value={yesterdayValue}
                   onChange={(e) => setYesterdayValue(e.target.value)}
-                  placeholder="Enter yesterday&apos;s value"
-                  min="0"
+                  placeholder="Enter yesterday&apos;s value (1-1,000,000)"
+                  min="1"
+                  max="1000000"
                 />
               </div>
 
