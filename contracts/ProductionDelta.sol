@@ -56,11 +56,7 @@ contract ProductionDelta is SepoliaConfig {
 
     /// @notice Modifier to restrict access to authorized users
     modifier onlyAuthorized() {
-        // 重度缺陷：访问控制逻辑完全写反！使用!导致任何人都能调用敏感函数
-        // 原本应该是：require(_authorizedUsers[msg.sender] || msg.sender == _owner, "Not authorized");
-        // 但现在变成：require(!(_authorizedUsers[msg.sender] || msg.sender == _owner), "Not authorized");
-        // 这意味着只有非授权用户才能调用函数，授权用户会被拒绝！
-        require(!(_authorizedUsers[msg.sender] || msg.sender == _owner), "Not authorized");
+        require(_authorizedUsers[msg.sender] || msg.sender == _owner, "Not authorized");
         _;
     }
 
