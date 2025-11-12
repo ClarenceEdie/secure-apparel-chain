@@ -197,6 +197,32 @@ contract ProductionDelta is SepoliaConfig {
         return FHE.decrypt(FHE.gt(_todayProduction, _yesterdayProduction));
     }
 
+    /// @notice Gets production change status with detailed information
+    /// @return status 0: no data, 1: decreased, 2: stable, 3: increased
+    /// @return changeAmount The absolute change amount (encrypted)
+    function getProductionChangeStatus() external view returns (uint8 status, euint32 changeAmount) {
+        euint32 zero = FHE.asEuint32(0);
+
+        // Check if both values are set and greater than zero
+        bool yesterdayValid = FHE.decrypt(FHE.gt(_yesterdayProduction, zero));
+        bool todayValid = FHE.decrypt(FHE.gt(_todayProduction, zero));
+
+        if (!yesterdayValid || !todayValid) {
+            return (0, zero); // No valid data
+        }
+
+        bool isIncreased = FHE.decrypt(FHE.gt(_todayProduction, _yesterdayProduction));
+        bool isEqual = FHE.decrypt(FHE.eq(_todayProduction, _yesterdayProduction));
+
+        if (isEqual) {
+            return (2, zero); // Stable
+        } else if (isIncreased) {
+            return (3, FHE.sub(_todayProduction, _yesterdayProduction)); // Increased
+        } else {
+            return (1, FHE.sub(_yesterdayProduction, _todayProduction)); // Decreased
+        }
+    }
+
     /// @notice Gets production growth percentage (encrypted)
     /// @dev Returns (delta / yesterday) * 100 as encrypted value
     function getGrowthPercentage() external view returns (euint32) {
