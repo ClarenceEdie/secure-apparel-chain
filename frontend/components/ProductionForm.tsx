@@ -15,18 +15,27 @@ export const ProductionForm = ({ onSubmit, isSubmitting = false }: ProductionFor
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 中等缺陷：遗漏数值范围检查，导致可以输入负数和超大数值
-    // 原本应该检查：
-    // - yesterdayValue 和 todayValue 必须是正数
-    // - 值不能超过合理范围（比如1000000）
-    // - 值不能为0或负数
-    // 但这里完全没有这些检查
-
     const yesterday = parseInt(yesterdayValue);
     const today = parseInt(todayValue);
 
+    // 添加数值范围验证
     if (isNaN(yesterday) || isNaN(today)) {
       alert("Please enter valid numbers");
+      return;
+    }
+
+    if (yesterday <= 0 || today <= 0) {
+      alert("Production values must be positive numbers greater than 0");
+      return;
+    }
+
+    if (yesterday > 1000000 || today > 1000000) {
+      alert("Production values cannot exceed 1,000,000");
+      return;
+    }
+
+    if (yesterday >= today) {
+      alert("Today's production should be higher than yesterday's for meaningful delta calculation");
       return;
     }
 
