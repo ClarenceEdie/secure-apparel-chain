@@ -255,12 +255,13 @@ export const ProductionDeltaDemo = () => {
               <button
                 className={`${buttonClass} mt-2 w-full`}
                 disabled={!productionDelta.canSubmit || !todayValue || parseInt(todayValue) <= 0}
-                onClick={() => productionDelta.submitProduction(parseInt(todayValue), true)}
-              >
-                {productionDelta.isSubmitting
-                  ? "Submitting..."
-                  : "Submit Today"}
-              </button>
+              onClick={() => productionDelta.submitProduction(parseInt(todayValue), true)}
+              disabled={productionDelta.isSubmitting || !todayValue || parseInt(todayValue) <= 0 || parseInt(todayValue) > 1000000}
+            >
+              {productionDelta.isSubmitting
+                ? "Submitting..."
+                : "Submit Today"}
+            </button>
             </div>
           </div>
         )}
