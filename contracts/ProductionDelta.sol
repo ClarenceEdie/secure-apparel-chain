@@ -18,7 +18,7 @@ contract ProductionDelta is SepoliaConfig {
     event DeltaCalculated(address indexed calculator, uint256 timestamp);
 
     /// @notice Event emitted when production statistics are calculated in batch
-    event ProductionCalculated(address calculator, uint256 timestamp, euint32 delta);
+    event ProductionCalculated(address indexed calculator, uint256 indexed timestamp, euint32 delta);
 
     /// @notice Event emitted when both productions are set in batch
     event BothProductionsSet(address indexed setter, uint256 timestamp);
