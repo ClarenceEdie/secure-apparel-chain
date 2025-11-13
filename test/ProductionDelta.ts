@@ -49,6 +49,32 @@ describe("ProductionDelta", function () {
     expect(encryptedDelta).to.eq(ethers.ZeroHash);
   });
 
+  it("should validate production data correctly", async function () {
+    const { fhevmInstance } = await fhevm.createInstance();
+
+    // Test with zero values - should be invalid
+    const zeroValue = fhevmInstance.createEncryptedInput(productionDeltaContractAddress, signers.deployer.address);
+    zeroValue.add32(0);
+    const zeroEncrypted = await zeroValue.encrypt();
+
+    await productionDeltaContract.connect(signers.deployer).setYesterdayProduction(zeroEncrypted.handles[0], zeroEncrypted.inputProof);
+    await productionDeltaContract.connect(signers.deployer).setTodayProduction(zeroEncrypted.handles[0], zeroEncrypted.inputProof);
+
+    const isValidZero = await productionDeltaContract.validateProductionData();
+    expect(isValidZero).to.be.false;
+
+    // Test with positive values - should be valid
+    const positiveValue = fhevmInstance.createEncryptedInput(productionDeltaContractAddress, signers.deployer.address);
+    positiveValue.add32(1000);
+    const positiveEncrypted = await positiveValue.encrypt();
+
+    await productionDeltaContract.connect(signers.deployer).setYesterdayProduction(positiveEncrypted.handles[0], positiveEncrypted.inputProof);
+    await productionDeltaContract.connect(signers.deployer).setTodayProduction(positiveEncrypted.handles[0], positiveEncrypted.inputProof);
+
+    const isValidPositive = await productionDeltaContract.validateProductionData();
+    expect(isValidPositive).to.be.true;
+  });
+
   it("should have correct initial contract status", async function () {
     const [owner, emergencyStop] = await productionDeltaContract.getContractStatus();
     expect(owner).to.eq(signers.deployer.address);
