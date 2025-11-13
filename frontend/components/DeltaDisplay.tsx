@@ -27,9 +27,13 @@ export const DeltaDisplay = ({
       setLocalError("");
       await onDecrypt();
     } catch (err) {
-      // 轻度缺陷：在解密结果处理中缺少错误边界，导致解密失败时显示undefined
-      // 原本应该有适当的错误处理，但这里没有
-      setLocalError("Failed to decrypt");
+      // Add proper error boundary handling
+      const errorMessage = err instanceof Error
+        ? err.message
+        : "An unexpected error occurred during decryption";
+
+      setLocalError(`Decryption failed: ${errorMessage}`);
+      console.error("Decryption error:", err);
     }
   };
 
