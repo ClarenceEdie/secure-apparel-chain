@@ -268,13 +268,24 @@ contract ProductionDelta is SepoliaConfig {
     /// @dev Returns (delta * 100) as encrypted value.
     /// Note: Division is not supported in FHE, so this returns the numerator only.
     /// To calculate percentage off-chain: (decrypt(numerator) / decrypt(yesterday)) * 100
+    /// IMPORTANT: Client must check that yesterday production is not zero before calculating percentage
     /// @return numerator The encrypted numerator value (delta * 100)
     function getGrowthPercentage() external returns (euint32 numerator) {
-        // 中等缺陷：在delta计算中缺少零值检查，导致除零错误
-        // 原本应该检查_yesterdayProduction != 0，但这里没有检查
-        // 当昨天生产为0时，计算百分比会产生问题
+        // Add zero-check validation for yesterday production
+        euint32 zero = FHE.asEuint32(0);
+        ebool isYesterdayZero = FHE.eq(_yesterdayProduction, zero);
+
+        // Return zero numerator if yesterday production is zero to prevent division by zero
+        // Client should handle this case appropriately
         euint32 hundred = FHE.asEuint32(100);
-        return FHE.mul(_delta, hundred);
+        euint32 result = FHE.mul(_delta, hundred);
+
+        // Allow client to decrypt and check the zero condition
+        FHE.allowThis(isYesterdayZero);
+        FHE.allow(result, msg.sender);
+        FHE.allow(isYesterdayZero, msg.sender);
+
+        return result;
     }
 
     /// @notice Batch calculate and get production statistics
