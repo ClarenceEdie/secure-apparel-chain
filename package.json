@@ -1,6 +1,6 @@
 {
   "name": "production-delta-fhe",
-  "description": "FHE-based production difference tracking system",
+  "description": "FHE-based production difference tracking system with encrypted analytics",
   "version": "0.1.0",
   "engines": {
     "node": ">=20",
