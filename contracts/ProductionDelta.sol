@@ -59,6 +59,13 @@ contract ProductionDelta is SepoliaConfig {
         require(!_emergencyStop, "Contract is in emergency stop mode");
         _;
     }
+
+    /// @notice Validates input value range
+    /// @param value The value to validate
+    modifier validValue(uint256 value) {
+        require(value > 0 && value <= 1000000, "Value must be between 1 and 1,000,000");
+        _;
+    }
     euint32 private _yesterdayProduction;
     euint32 private _todayProduction;
     euint32 private _delta;
