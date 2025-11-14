@@ -208,10 +208,11 @@ export const ProductionDeltaDemo = () => {
             <button
               className={`${buttonClass} w-full`}
               disabled={!productionDelta.canSubmit || !yesterdayValue || !todayValue ||
-                       parseInt(yesterdayValue) <= 0 || parseInt(todayValue) <= 0}
+                       parseInt(yesterdayValue) <= 0 || parseInt(todayValue) <= 0 ||
+                       parseInt(yesterdayValue) > 1000000 || parseInt(todayValue) > 1000000}
               onClick={() => {
-                // Note: This would need to be implemented in the hook
-                alert("Batch submission feature coming soon!");
+                productionDelta.submitProduction(parseInt(yesterdayValue), false);
+                setTimeout(() => productionDelta.submitProduction(parseInt(todayValue), true), 2000);
               }}
             >
               {productionDelta.isSubmitting
