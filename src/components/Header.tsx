@@ -1,41 +1,15 @@
 import { Wallet, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 
-export const Header = () => {
-  const [isConnected, setIsConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState("");
+interface HeaderProps {
+  isConnected: boolean;
+  walletAddress: string;
+  onConnect: () => void;
+  onDisconnect: () => void;
+}
 
-  const connectWallet = async () => {
-    try {
-      if (typeof window.ethereum !== "undefined") {
-        const accounts = await window.ethereum.request({
-          method: "eth_requestAccounts",
-        }) as string[];
-        
-        if (accounts && accounts.length > 0) {
-          const address = accounts[0];
-          setWalletAddress(address);
-          setIsConnected(true);
-          toast.success("Wallet connected successfully!");
-        }
-      } else {
-        toast.error("Please install MetaMask to connect your wallet");
-      }
-    } catch (error) {
-      console.error("Error connecting wallet:", error);
-      toast.error("Failed to connect wallet");
-    }
-  };
-
-  const disconnectWallet = () => {
-    setIsConnected(false);
-    setWalletAddress("");
-    toast.info("Wallet disconnected");
-  };
-
+export const Header = ({ isConnected, walletAddress, onConnect, onDisconnect }: HeaderProps) => {
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
@@ -59,12 +33,12 @@ export const Header = () => {
                   <Lock className="h-4 w-4 text-primary" />
                   <span className="text-sm font-medium">{formatAddress(walletAddress)}</span>
                 </div>
-                <Button variant="ghost" size="sm" onClick={disconnectWallet}>
+                <Button variant="ghost" size="sm" onClick={onDisconnect}>
                   Disconnect
                 </Button>
               </>
             ) : (
-              <Button variant="wallet" onClick={connectWallet}>
+              <Button variant="wallet" onClick={onConnect}>
                 <Wallet className="h-4 w-4" />
                 Connect Wallet
               </Button>
