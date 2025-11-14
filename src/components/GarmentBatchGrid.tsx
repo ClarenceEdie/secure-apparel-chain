@@ -65,9 +65,11 @@ const mockBatches = [
 
 interface GarmentBatchGridProps {
   isWalletConnected: boolean;
+  customBatches?: any[];
 }
 
-export const GarmentBatchGrid = ({ isWalletConnected }: GarmentBatchGridProps) => {
+export const GarmentBatchGrid = ({ isWalletConnected, customBatches = [] }: GarmentBatchGridProps) => {
+  const allBatches = [...customBatches, ...mockBatches];
   return (
     <section className="py-16 bg-background">
       <div className="container mx-auto px-4">
@@ -79,7 +81,7 @@ export const GarmentBatchGrid = ({ isWalletConnected }: GarmentBatchGridProps) =
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockBatches.map((batch) => (
+          {allBatches.map((batch) => (
             <GarmentBatchCard 
               key={batch.id} 
               batch={batch} 

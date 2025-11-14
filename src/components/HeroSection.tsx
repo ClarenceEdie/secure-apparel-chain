@@ -2,7 +2,12 @@ import { Shield, Lock, Verified } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroBg from "@/assets/hero-bg.jpg";
 
-export const HeroSection = () => {
+interface HeroSectionProps {
+  onUploadClick: () => void;
+  onVerifyClick: () => void;
+}
+
+export const HeroSection = ({ onUploadClick, onVerifyClick }: HeroSectionProps) => {
   return (
     <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden">
       {/* Background with overlay */}
@@ -28,11 +33,11 @@ export const HeroSection = () => {
           </div>
 
           <div className="flex flex-wrap gap-4 justify-center animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
-            <Button variant="hero" size="lg">
+            <Button variant="hero" size="lg" onClick={onUploadClick}>
               <Shield className="h-5 w-5" />
               Upload Batch
             </Button>
-            <Button variant="outline" size="lg">
+            <Button variant="outline" size="lg" onClick={onVerifyClick}>
               <Verified className="h-5 w-5" />
               Verify Authenticity
             </Button>
