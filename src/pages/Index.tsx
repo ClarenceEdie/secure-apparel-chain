@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 const Index = () => {
   const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const [walletAddress, setWalletAddress] = useState("");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [customBatches, setCustomBatches] = useState<any[]>([]);
 
@@ -18,7 +19,10 @@ const Index = () => {
           const accounts = await window.ethereum.request({ 
             method: "eth_accounts" 
           }) as string[];
-          setIsWalletConnected(accounts && accounts.length > 0);
+          if (accounts && accounts.length > 0) {
+            setIsWalletConnected(true);
+            setWalletAddress(accounts[0]);
+          }
         } catch (error) {
           console.error("Error checking wallet connection:", error);
         }
@@ -29,17 +33,50 @@ const Index = () => {
 
     // Listen for account changes
     if (typeof window.ethereum !== "undefined") {
-      window.ethereum.on("accountsChanged", (accounts: string[]) => {
-        setIsWalletConnected(accounts && accounts.length > 0);
-      });
+      const handleAccountsChanged = (accounts: string[]) => {
+        if (accounts && accounts.length > 0) {
+          setIsWalletConnected(true);
+          setWalletAddress(accounts[0]);
+        } else {
+          setIsWalletConnected(false);
+          setWalletAddress("");
+        }
+      };
+      
+      window.ethereum.on("accountsChanged", handleAccountsChanged);
+      
+      return () => {
+        window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
+      };
     }
-
-    return () => {
-      if (typeof window.ethereum !== "undefined") {
-        window.ethereum.removeListener("accountsChanged", () => {});
-      }
-    };
   }, []);
+
+  const connectWallet = async () => {
+    try {
+      if (typeof window.ethereum !== "undefined") {
+        const accounts = await window.ethereum.request({
+          method: "eth_requestAccounts",
+        }) as string[];
+        
+        if (accounts && accounts.length > 0) {
+          setWalletAddress(accounts[0]);
+          setIsWalletConnected(true);
+          toast.success("Wallet connected successfully!");
+        }
+      } else {
+        toast.error("Please install MetaMask to connect your wallet");
+      }
+    } catch (error) {
+      console.error("Error connecting wallet:", error);
+      toast.error("Failed to connect wallet");
+    }
+  };
+
+  const disconnectWallet = () => {
+    setIsWalletConnected(false);
+    setWalletAddress("");
+    toast.info("Wallet disconnected");
+  };
 
   const handleUploadClick = () => {
     if (!isWalletConnected) {
@@ -62,7 +99,12 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header 
+        isConnected={isWalletConnected}
+        walletAddress={walletAddress}
+        onConnect={connectWallet}
+        onDisconnect={disconnectWallet}
+      />
       <main className="pt-20">
         <HeroSection 
           onUploadClick={handleUploadClick} 
