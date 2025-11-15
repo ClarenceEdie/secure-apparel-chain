@@ -273,7 +273,12 @@ export const ProductionDeltaDemo = () => {
       </div>
 
       <div className="col-span-full mx-20 px-6 pb-6 rounded-lg bg-white/90 backdrop-blur-sm border-2 border-purple-200 shadow-lg">
-        <p className="font-semibold text-black text-lg mt-4 mb-4">Calculate & View Delta</p>
+        <div className="flex justify-between items-center mt-4 mb-4">
+          <p className="font-semibold text-black text-lg">Calculate & View Delta</p>
+          <div className="text-sm text-gray-600">
+            Status: {productionDelta.canCalculate ? "Ready" : "Waiting for data"}
+          </div>
+        </div>
         
         <div className="grid grid-cols-2 gap-4 mb-4">
           <button
