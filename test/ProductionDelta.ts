@@ -75,6 +75,22 @@ describe("ProductionDelta", function () {
     expect(isValidPositive).to.be.true;
   });
 
+  it("should handle emergency stop functionality", async function () {
+    // Initially not in emergency stop
+    const statusBefore = await productionDeltaContract.getContractStatus();
+    expect(statusBefore.emergencyStop).to.be.false;
+
+    // Activate emergency stop
+    await productionDeltaContract.connect(signers.deployer).emergencyStop();
+    const statusAfter = await productionDeltaContract.getContractStatus();
+    expect(statusAfter.emergencyStop).to.be.true;
+
+    // Resume operations
+    await productionDeltaContract.connect(signers.deployer).resumeOperations();
+    const statusFinal = await productionDeltaContract.getContractStatus();
+    expect(statusFinal.emergencyStop).to.be.false;
+  });
+
   it("should have correct initial contract status", async function () {
     const [owner, emergencyStop] = await productionDeltaContract.getContractStatus();
     expect(owner).to.eq(signers.deployer.address);
