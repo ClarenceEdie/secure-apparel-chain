@@ -406,5 +406,190 @@ describe("ProductionDelta", function () {
     expect(status.isEqual).to.not.eq(ethers.ZeroHash);
     expect(status.delta).to.not.eq(ethers.ZeroHash);
   });
+
+  describe("Access Control Tests", function () {
+    it("should allow owner to authorize users", async function () {
+      const isAuthorizedBefore = await productionDeltaContract.isAuthorized(signers.alice.address);
+      expect(isAuthorizedBefore).to.be.false;
+
+      await productionDeltaContract.authorizeUser(signers.alice.address);
+
+      const isAuthorizedAfter = await productionDeltaContract.isAuthorized(signers.alice.address);
+      expect(isAuthorizedAfter).to.be.true;
+    });
+
+    it("should allow owner to revoke users", async function () {
+      await productionDeltaContract.authorizeUser(signers.alice.address);
+
+      await productionDeltaContract.revokeUser(signers.alice.address);
+
+      const isAuthorizedAfter = await productionDeltaContract.isAuthorized(signers.alice.address);
+      expect(isAuthorizedAfter).to.be.false;
+    });
+
+    it("should prevent non-owner from authorizing users", async function () {
+      await expect(
+        productionDeltaContract.connect(signers.alice).authorizeUser(signers.bob.address)
+      ).to.be.revertedWith("Only owner can perform this action");
+    });
+
+    it("should prevent revoking owner authorization", async function () {
+      await expect(
+        productionDeltaContract.revokeUser(signers.deployer.address)
+      ).to.be.revertedWith("Cannot revoke owner");
+    });
+  });
+
+  describe("Emergency Stop Tests", function () {
+    it("should allow owner to activate emergency stop", async function () {
+      await productionDeltaContract.emergencyStop();
+
+      const status = await productionDeltaContract.getContractStatus();
+      expect(status.isEmergencyStopped).to.be.true;
+    });
+
+    it("should allow owner to resume operations", async function () {
+      await productionDeltaContract.emergencyStop();
+      await productionDeltaContract.resumeOperations();
+
+      const status = await productionDeltaContract.getContractStatus();
+      expect(status.isEmergencyStopped).to.be.false;
+    });
+
+    it("should prevent operations during emergency stop", async function () {
+      await productionDeltaContract.emergencyStop();
+
+      const input = fhevm.createEncryptedInput(await productionDeltaContract.getAddress(), signers.deployer.address);
+      input.add32(1000);
+
+      await expect(
+        productionDeltaContract.setYesterdayProduction(input, input.getProof())
+      ).to.be.revertedWith("Contract is in emergency stop mode");
+    });
+
+    it("should prevent non-owner from activating emergency stop", async function () {
+      await expect(
+        productionDeltaContract.connect(signers.alice).emergencyStop()
+      ).to.be.revertedWith("Only owner can perform this action");
+    });
+  });
+
+  describe("Batch Operations Tests", function () {
+    it("should handle batch production setting correctly", async function () {
+      const input1 = fhevm.createEncryptedInput(await productionDeltaContract.getAddress(), signers.deployer.address);
+      input1.add32(1000);
+      const input2 = fhevm.createEncryptedInput(await productionDeltaContract.getAddress(), signers.deployer.address);
+      input2.add32(1200);
+
+      await productionDeltaContract.setBothProductions(
+        input1,
+        input2,
+        input1.getProof(),
+        input2.getProof()
+      );
+
+      // Verify delta calculation works after batch set
+      await productionDeltaContract.calculateDelta();
+      const delta = await productionDeltaContract.getDelta();
+      expect(delta).to.not.eq(ethers.ZeroHash);
+    });
+
+    it("should handle batch statistics calculation", async function () {
+      const input1 = fhevm.createEncryptedInput(await productionDeltaContract.getAddress(), signers.deployer.address);
+      input1.add32(1000);
+      const input2 = fhevm.createEncryptedInput(await productionDeltaContract.getAddress(), signers.deployer.address);
+      input2.add32(1200);
+
+      await productionDeltaContract.setBothProductions(
+        input1,
+        input2,
+        input1.getProof(),
+        input2.getProof()
+      );
+
+      const stats = await productionDeltaContract.batchCalculateStatistics();
+
+      expect(stats.delta).to.not.eq(ethers.ZeroHash);
+      expect(stats.growthPercentage).to.not.eq(ethers.ZeroHash);
+      expect(stats.isValid).to.not.eq(ethers.ZeroHash);
+    });
+  });
+
+  describe("Growth Percentage Edge Cases", function () {
+    it("should handle zero yesterday production safely", async function () {
+      const zeroInput = fhevm.createEncryptedInput(await productionDeltaContract.getAddress(), signers.deployer.address);
+      zeroInput.add32(0);
+      const valueInput = fhevm.createEncryptedInput(await productionDeltaContract.getAddress(), signers.deployer.address);
+      valueInput.add32(100);
+
+      await productionDeltaContract.setBothProductions(
+        zeroInput,
+        valueInput,
+        zeroInput.getProof(),
+        valueInput.getProof()
+      );
+
+      // Should not crash when calculating growth percentage
+      const percentage = await productionDeltaContract.getGrowthPercentage();
+      expect(percentage).to.not.eq(ethers.ZeroHash);
+    });
+
+    it("should handle identical values correctly", async function () {
+      const input1 = fhevm.createEncryptedInput(await productionDeltaContract.getAddress(), signers.deployer.address);
+      input1.add32(1000);
+      const input2 = fhevm.createEncryptedInput(await productionDeltaContract.getAddress(), signers.deployer.address);
+      input2.add32(1000);
+
+      await productionDeltaContract.setBothProductions(
+        input1,
+        input2,
+        input1.getProof(),
+        input2.getProof()
+      );
+
+      await productionDeltaContract.calculateDelta();
+      const status = await productionDeltaContract.getProductionChangeStatus();
+
+      // Values should be equal
+      expect(status.isEqual).to.not.eq(ethers.ZeroHash);
+    });
+  });
+
+  describe("Contract Statistics Tests", function () {
+    it("should return accurate contract statistics", async function () {
+      // Authorize a user first
+      await productionDeltaContract.authorizeUser(signers.alice.address);
+
+      const stats = await productionDeltaContract.getContractStatistics();
+
+      expect(stats.totalAuthorized).to.be.gte(1); // At least owner
+      expect(stats.isEmergencyStopped).to.be.false;
+
+      // Encrypted results should be valid
+      expect(stats.yesterdayComparison).to.not.eq(ethers.ZeroHash);
+      expect(stats.todayComparison).to.not.eq(ethers.ZeroHash);
+    });
+
+    it("should update last calculation timestamp", async function () {
+      const input1 = fhevm.createEncryptedInput(await productionDeltaContract.getAddress(), signers.deployer.address);
+      input1.add32(1000);
+      const input2 = fhevm.createEncryptedInput(await productionDeltaContract.getAddress(), signers.deployer.address);
+      input2.add32(1200);
+
+      await productionDeltaContract.setBothProductions(
+        input1,
+        input2,
+        input1.getProof(),
+        input2.getProof()
+      );
+
+      const beforeTimestamp = (await productionDeltaContract.getLastUpdateInfo()).timestamp;
+
+      await productionDeltaContract.calculateDelta();
+
+      const afterTimestamp = (await productionDeltaContract.getLastUpdateInfo()).timestamp;
+      expect(afterTimestamp).to.be.gt(beforeTimestamp);
+    });
+  });
 });
 
