@@ -1,6 +1,12 @@
-# Production Delta - FHE Encrypted Analytics FHE
+# Production Delta - FHE Encrypted Analytics
 
 A Fully Homomorphic Encryption (FHE) based production difference tracking system. This system allows you to track encrypted production values and calculate the difference between today and yesterday without revealing the actual production numbers.
+
+## 🚀 Live Demo
+
+- **Web Application**: [https://clothing-zeta-ashy.vercel.app/](https://clothing-zeta-ashy.vercel.app/)
+- **Demo Video**: [https://github.com/ClarenceEdie/secure-apparel-chain/blob/main/clothing.mp4](https://github.com/ClarenceEdie/secure-apparel-chain/blob/main/clothing.mp4)
+- **Testnet Contract**: `0x3585B7E5Cfe9d31000009E3efc8Eb77aee55246f` (Sepolia)
 
 ## Features
 
@@ -25,6 +31,15 @@ A Fully Homomorphic Encryption (FHE) based production difference tracking system
 
 **Result**: "Today is 180 units more than yesterday"  
 🔒 But the system doesn't know yesterday or today's real numbers.
+
+## 🔗 Testnet Deployment
+
+The contract has been deployed on Sepolia testnet for testing:
+
+- **Network**: Sepolia Testnet
+- **Contract Address**: `0x3585B7E5Cfe9d31000009E3efc8Eb77aee55246f`
+- **Chain ID**: 11155111
+- **Block Explorer**: [Etherscan Sepolia](https://sepolia.etherscan.io/address/0x3585B7E5Cfe9d31000009E3efc8Eb77aee55246f)
 
 ## Quick Start
 
@@ -145,9 +160,11 @@ pro27/
 #### Analysis Functions
 - `isProductionIncreased()` - Check if production grew (returns bool)
 - `getGrowthPercentage()` - Calculate encrypted growth percentage
+- `getProductionChangeStatus()` - Get detailed production change status (0=no data, 1=decreased, 2=stable, 3=increased)
 - `validateProductionData()` - Validate that both values are set and > 0
 - `getLastCalculatedDelta()` - Get last calculated delta value
 - `getLastUpdateInfo()` - Get timestamp and updater of last calculation
+- `getContractStatistics()` - Get comprehensive contract statistics including authorized users count and data validation status
 
 #### Access Control Functions
 - `authorizeUser(address user)` - Authorize user for operations (owner only)
@@ -201,6 +218,16 @@ npm run test:sepolia
 Update `frontend/config/wagmi.ts` with your WalletConnect project ID from https://cloud.walletconnect.com
 
 ## Recent Updates
+
+### v1.0.0 - Production Ready Release
+- ✅ Deployed to Sepolia testnet: `0x3585B7E5Cfe9d31000009E3efc8Eb77aee55246f`
+- ✅ Live demo deployed on Vercel: https://clothing-zeta-ashy.vercel.app/
+- ✅ Added comprehensive contract statistics and production change status analysis
+- ✅ Implemented input validation with value range constraints (1-1,000,000)
+- ✅ Enhanced UI with loading animations and real-time status indicators
+- ✅ Improved test coverage with emergency stop and validation testing
+- ✅ Added ESLint rules for better code quality
+- ✅ Integrated CoinMarketCap API for accurate gas cost calculations
 
 ### v0.3.0 - Enhanced Analytics & Security
 - ✅ Added production growth percentage calculations
