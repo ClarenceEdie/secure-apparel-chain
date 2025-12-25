@@ -3,7 +3,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { ErrorSuppressor } from "../components/ErrorSuppressor";
-import Image from "next/image";
+import { FaviconIcon } from "../components/FaviconIcon";
 
 export const metadata: Metadata = {
   title: "Secure Apparel Chain - Privacy-Preserving Production Analytics",
@@ -12,6 +12,14 @@ export const metadata: Metadata = {
   authors: [{ name: "Production Delta Team" }],
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
   themeColor: "#0066ff",
+  icons: {
+    icon: [
+      { url: "/logo.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    shortcut: "/logo.svg",
+    apple: "/logo.svg",
+  },
 };
 
 export default async function RootLayout({
@@ -30,14 +38,7 @@ export default async function RootLayout({
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex w-full h-fit py-4 justify-between items-center">
                   <div className="flex items-center gap-4">
-                    <Image
-                      src="/logo.svg"
-                      alt="Secure Apparel Chain Logo"
-                      width={48}
-                      height={48}
-                      priority
-                      className="w-10 h-10 md:w-12 md:h-12"
-                    />
+                    <FaviconIcon />
                     <div>
                       <h1 className="text-lg md:text-xl font-bold bg-gradient-to-r from-production-blue-600 to-production-teal-600 bg-clip-text text-transparent">
                         Secure Apparel Chain

@@ -303,12 +303,42 @@ export const useProductionDelta = (parameters: {
   const submitProduction = useCallback(
     (value: number, isToday: boolean) => {
       if (isRefreshingRef.current || isSubmittingRef.current) {
+        console.warn('Submit already in progress, ignoring request');
         return;
       }
 
-      if (!productionDelta.address || !instance || !ethersSigner || value <= 0) {
+      if (!productionDelta.address) {
+        console.error('Contract address not available');
+        setMessage('Contract address not available. Please check network connection.');
         return;
       }
+      
+      if (!instance) {
+        console.error('FHEVM instance not available');
+        setMessage('FHEVM instance not initialized. Please wait for initialization.');
+        return;
+      }
+      
+      if (!ethersSigner) {
+        console.error('Ethers signer not available');
+        setMessage('Wallet signer not available. Please connect your wallet.');
+        return;
+      }
+      
+      if (value <= 0) {
+        console.error('Invalid value:', value);
+        setMessage('Value must be greater than 0');
+        return;
+      }
+      
+      console.log('Submit production parameters:', {
+        value,
+        isToday,
+        contractAddress: productionDelta.address,
+        signerAddress: ethersSigner.address,
+        chainId,
+        hasInstance: !!instance,
+      });
 
       const thisChainId = chainId;
       const thisAddress = productionDelta.address;
@@ -335,12 +365,77 @@ export const useProductionDelta = (parameters: {
           !sameSigner.current(thisEthersSigner);
 
         try {
+          // Verify contract exists at address
+          setMessage(`Verifying contract deployment...`);
+          const contractCode = await thisEthersSigner.provider.getCode(thisAddress);
+          if (!contractCode || contractCode === '0x') {
+            throw new Error(`No contract found at address ${thisAddress}. Please deploy the contract first using: npm run deploy:localhost`);
+          }
+          console.log('Contract code length:', contractCode.length);
+
+          // Check if user is authorized (safely check if function exists in ABI)
+          // Note: ABI might not include isAuthorized, so we check if function exists first
+          try {
+            // Check if isAuthorized function exists in the contract interface
+            if (contract.interface.hasFunction('isAuthorized')) {
+              const isAuthorized = await contract.isAuthorized(thisEthersSigner.address);
+              console.log('User authorized:', isAuthorized);
+              if (!isAuthorized) {
+                // Try to get owner and check if user is owner
+                if (contract.interface.hasFunction('owner')) {
+                  try {
+                    const owner = await contract.owner();
+                    console.log('Contract owner:', owner);
+                    const isOwner = owner.toLowerCase() === thisEthersSigner.address.toLowerCase();
+                    
+                    if (isOwner && contract.interface.hasFunction('authorizeUser')) {
+                      // User is owner, try to authorize themselves
+                      setMessage('Authorizing user (owner)...');
+                      try {
+                        const authTx = await contract.authorizeUser(thisEthersSigner.address);
+                        await authTx.wait();
+                        console.log('User authorized successfully');
+                        setMessage('User authorized. Retrying submission...');
+                        // Continue with the submission
+                      } catch (authTxError: any) {
+                        console.error('Failed to authorize user:', authTxError);
+                        throw new Error(`Failed to authorize user: ${authTxError?.message || authTxError}. You are the owner but authorization failed.`);
+                      }
+                    } else if (!isOwner) {
+                      throw new Error(`User not authorized. Owner: ${owner}. Your address: ${thisEthersSigner.address}. Please ask the owner to authorize your address.`);
+                    }
+                  } catch (ownerError: any) {
+                    if (ownerError.message && ownerError.message.includes('not authorized')) {
+                      throw ownerError; // Re-throw authorization errors
+                    }
+                    console.warn('Could not check owner:', ownerError);
+                    // Continue anyway, might fail for other reasons
+                  }
+                } else {
+                  console.warn('Contract does not have owner() function, skipping authorization check');
+                }
+              }
+            } else {
+              console.log('Contract does not have isAuthorized() function, skipping authorization check');
+              // Continue without authorization check - the contract call will fail if not authorized
+            }
+          } catch (authError: any) {
+            if (authError.message && authError.message.includes('not authorized')) {
+              throw authError; // Re-throw authorization errors
+            }
+            console.warn('Could not check authorization:', authError);
+            // Continue anyway - the contract call will fail if not authorized
+          }
+
+          setMessage(`Creating encrypted input for ${opMsg}...`);
+          
           const input = instance.createEncryptedInput(
             thisAddress,
             thisEthersSigner.address
           );
           input.add32(value);
 
+          setMessage(`Encrypting value ${value}...`);
           const enc = await input.encrypt();
 
           if (isStale()) {
@@ -348,10 +443,96 @@ export const useProductionDelta = (parameters: {
             return;
           }
 
-          setMessage(`Call ${opMsg}...`);
+          // Ensure handle and inputProof are in correct format
+          let handle: string;
+          const rawHandle = enc.handles[0];
+          
+          if (typeof rawHandle === 'string') {
+            handle = rawHandle.startsWith('0x') ? rawHandle : `0x${rawHandle}`;
+          } else if (rawHandle instanceof Uint8Array) {
+            handle = '0x' + Array.from(rawHandle).map(b => b.toString(16).padStart(2, '0')).join('');
+          } else if (Array.isArray(rawHandle)) {
+            handle = '0x' + rawHandle.map(b => (typeof b === 'number' ? b : parseInt(String(b), 10)).toString(16).padStart(2, '0')).join('');
+          } else {
+            handle = String(rawHandle).startsWith('0x') ? String(rawHandle) : `0x${String(rawHandle)}`;
+          }
 
-          const tx: ethers.TransactionResponse =
-            await contract[op](enc.handles[0], enc.inputProof);
+          let inputProof: string;
+          const rawProof = enc.inputProof;
+          
+          if (typeof rawProof === 'string') {
+            inputProof = rawProof;
+          } else if (rawProof instanceof Uint8Array) {
+            inputProof = '0x' + Array.from(rawProof).map(b => b.toString(16).padStart(2, '0')).join('');
+          } else if (Array.isArray(rawProof)) {
+            inputProof = '0x' + rawProof.map(b => (typeof b === 'number' ? b : parseInt(String(b), 10)).toString(16).padStart(2, '0')).join('');
+          } else {
+            inputProof = String(rawProof);
+          }
+
+          console.log('Encrypted input details:', {
+            handle,
+            handleLength: handle.length,
+            inputProofLength: inputProof.length,
+            contractAddress: thisAddress,
+            operation: op,
+          });
+
+          setMessage(`Calling ${opMsg}...`);
+          
+          // Try to estimate gas first for better error messages
+          // Note: Gas estimation might fail for FHEVM contracts, so we'll try the actual call if estimation fails
+          let estimatedGas: bigint | null = null;
+          try {
+            estimatedGas = await contract[op].estimateGas(handle, inputProof);
+            console.log('Estimated gas:', estimatedGas.toString());
+          } catch (gasError: any) {
+            console.warn('Gas estimation failed, will try actual call:', gasError);
+            // Don't throw here - FHEVM contracts sometimes fail gas estimation but the actual call works
+            // We'll proceed with the actual call and handle errors there
+          }
+          
+          // If gas estimation succeeded, use it; otherwise use a reasonable default
+          const gasLimit = estimatedGas ? estimatedGas : 500000n; // Default gas limit for FHEVM operations
+
+          // Try the actual contract call
+          // For FHEVM contracts, sometimes gas estimation fails but the call succeeds
+          let tx: ethers.TransactionResponse;
+          try {
+            if (estimatedGas) {
+              // Use estimated gas if available
+              tx = await contract[op](handle, inputProof, { gasLimit });
+            } else {
+              // Try without explicit gas limit first (let ethers estimate)
+              try {
+                tx = await contract[op](handle, inputProof);
+              } catch (noGasError: any) {
+                // If that fails, try with explicit gas limit
+                console.log('Trying with explicit gas limit:', gasLimit.toString());
+                tx = await contract[op](handle, inputProof, { gasLimit });
+              }
+            }
+          } catch (callError: any) {
+            console.error('Contract call failed:', callError);
+            const errorMsg = callError?.message || String(callError);
+            
+            // Check for specific error patterns
+            if (errorMsg.includes('missing revert data') || errorMsg.includes('CALL_EXCEPTION')) {
+              // Try to get more details by calling a view function
+              try {
+                await contract.getDelta(); // Try a simple view call to verify contract is accessible
+                throw new Error(`Contract call failed with "missing revert data". This usually means: 1) FHEVM precompiled contracts not initialized, 2) Contract function reverted without error message, 3) Invalid encrypted input format. Try: 1) Restart Hardhat node with FHEVM support, 2) Re-deploy contract, 3) Check FHEVM initialization status.`);
+              } catch (viewError: any) {
+                throw new Error(`Contract not accessible. Please verify: 1) Contract is deployed at ${thisAddress} (run: npm run deploy:localhost), 2) Hardhat node is running, 3) FHEVM is properly initialized.`);
+              }
+            } else if (errorMsg.includes('Not authorized') || errorMsg.includes('not authorized')) {
+              throw new Error(`Authorization failed: Your address ${thisEthersSigner.address} is not authorized. If you are the contract owner, the contract should auto-authorize you on deployment.`);
+            } else if (errorMsg.includes('emergency stop')) {
+              throw new Error('Contract is in emergency stop mode. Operations are temporarily disabled.');
+            } else {
+              throw new Error(`Contract call failed: ${errorMsg}. Check console for details.`);
+            }
+          }
 
           setMessage(`Wait for tx:${tx.hash}...`);
 
@@ -366,12 +547,40 @@ export const useProductionDelta = (parameters: {
 
           refreshDeltaHandle();
         } catch (e: any) {
+          console.error(`${opMsg} error details:`, {
+            error: e,
+            message: e?.message,
+            code: e?.code,
+            data: e?.data,
+            reason: e?.reason,
+            stack: e?.stack,
+          });
+          
           const errorMsg = e?.message || String(e);
-          if (errorMsg.includes('relayer') || errorMsg.includes('ERR_CONNECTION_CLOSED') || errorMsg.includes('Failed to fetch')) {
-            setMessage(`${opMsg} Failed! Relayer service unavailable. Please try using local Hardhat node (chainId: 31337) for testing.`);
+          const errorCode = e?.code;
+          const errorData = e?.data;
+          
+          let userMessage = `${opMsg} Failed! `;
+          
+          if (errorCode === -32603 || errorCode === 'INTERNAL_ERROR') {
+            userMessage += 'Internal JSON-RPC error. ';
+            if (errorData) {
+              userMessage += `Details: ${JSON.stringify(errorData)}. `;
+            }
+            userMessage += 'Possible causes: 1) Hardhat node not running (start with: npm run node:fhevm), 2) Contract not deployed (deploy with: npm run deploy:localhost), 3) FHEVM not properly initialized, 4) User not authorized.';
+          } else if (errorMsg.includes('missing revert data') || errorMsg.includes('CALL_EXCEPTION')) {
+            userMessage += `Contract call failed. Please verify: 1) Contract is deployed at ${productionDelta.address} (run: npm run deploy:localhost), 2) Hardhat node is running, 3) Your address is authorized.`;
+          } else if (errorMsg.includes('not authorized') || errorMsg.includes('Not authorized')) {
+            userMessage += `Authorization required. Your address needs to be authorized by the contract owner.`;
+          } else if (errorMsg.includes('relayer') || errorMsg.includes('ERR_CONNECTION_CLOSED') || errorMsg.includes('Failed to fetch')) {
+            userMessage += 'Relayer service unavailable. Please try using local Hardhat node (chainId: 31337) for testing.';
+          } else if (errorMsg.includes('gas') || errorMsg.includes('Gas')) {
+            userMessage += errorMsg; // Already contains detailed message from gas estimation
           } else {
-            setMessage(`${opMsg} Failed! ${errorMsg}`);
+            userMessage += errorMsg;
           }
+          
+          setMessage(userMessage);
         } finally {
           isSubmittingRef.current = false;
           setIsSubmitting(false);

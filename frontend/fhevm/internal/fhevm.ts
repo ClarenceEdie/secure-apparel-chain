@@ -234,28 +234,33 @@ export const createFhevmInstance = async (parameters: {
     const fhevmRelayerMetadata =
       await tryFetchFHEVMHardhatNodeRelayerMetadata(rpcUrl);
 
-    if (fhevmRelayerMetadata) {
-      // fhevmRelayerMetadata is defined, which means rpcUrl refers to a FHEVM Hardhat Node
-      notify("creating");
+    notify("creating");
 
-      //////////////////////////////////////////////////////////////////////////
-      // 
-      // WARNING!!
-      // ALWAY USE DYNAMIC IMPORT TO AVOID INCLUDING THE ENTIRE FHEVM MOCK LIB 
-      // IN THE FINAL PRODUCTION BUNDLE!!
-      // 
-      //////////////////////////////////////////////////////////////////////////
-      const fhevmMock = await import("./mock/fhevmMock");
-      const mockInstance = await fhevmMock.fhevmMockCreateInstance({
-        rpcUrl,
-        chainId,
-        metadata: fhevmRelayerMetadata,
-      });
+    //////////////////////////////////////////////////////////////////////////
+    // 
+    // WARNING!!
+    // ALWAY USE DYNAMIC IMPORT TO AVOID INCLUDING THE ENTIRE FHEVM MOCK LIB 
+    // IN THE FINAL PRODUCTION BUNDLE!!
+    // 
+    //////////////////////////////////////////////////////////////////////////
+    const fhevmMock = await import("./mock/fhevmMock");
+    
+    // Use metadata if available, otherwise use default addresses (fallback)
+    const metadata = fhevmRelayerMetadata || {
+      ACLAddress: "0x50157CFfD6bBFA2DECe204a89ec419c23ef5755D" as `0x${string}`,
+      InputVerifierAddress: "0x901F8942346f7AB3a01F6D7613119Bca447Bb030" as `0x${string}`,
+      KMSVerifierAddress: "0x1364cBBf2cDF5032C47d8226a6f6FBD2AFCDacAC" as `0x${string}`,
+    };
+    
+    const mockInstance = await fhevmMock.fhevmMockCreateInstance({
+      rpcUrl,
+      chainId,
+      metadata,
+    });
 
-      throwIfAborted();
+    throwIfAborted();
 
-      return mockInstance;
-    }
+    return mockInstance;
   }
 
   throwIfAborted();
