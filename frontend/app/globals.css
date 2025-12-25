@@ -2,29 +2,276 @@
 @tailwind components;
 @tailwind utilities;
 
-.production-delta-bg {
-  /* Production Delta FHE - Yellow background theme */
-  background-color: #ffd200;
+/* Ensure body and html are positioned correctly */
+html, body {
+  position: relative;
+  min-height: 100vh;
 }
 
-/* Base UI Framework Styles */
-.btn-primary {
-  @apply bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors font-medium;
+/* Production Chain Theme Colors - Industrial Blue & Teal */
+:root {
+  --production-blue: #0066ff;
+  --production-blue-light: #4d94ff;
+  --production-blue-dark: #0052cc;
+  --production-teal: #00d4aa;
+  --production-teal-light: #7dd3c0;
+  --production-teal-dark: #00a085;
+  --production-teal-50: #f0fdfa;
+  --production-teal-100: #ccfbf1;
+  --production-teal-200: #99f6e4;
+  --production-teal-300: #5eead4;
+  --production-teal-400: #2dd4bf;
+  --production-teal-500: #14b8a6;
+  --production-teal-600: #0d9488;
+  --production-teal-700: #0f766e;
+  --production-teal-800: #115e59;
+  --production-teal-900: #134e4a;
+  --production-teal-950: #042f2e;
+  --production-blue-50: #e6f2ff;
+  --production-blue-100: #b3d9ff;
+  --production-blue-200: #80bfff;
+  --production-blue-300: #4da6ff;
+  --production-blue-400: #1a8cff;
+  --production-blue-500: #0066ff;
+  --production-blue-600: #0052cc;
+  --production-blue-700: #003d99;
+  --production-blue-800: #002966;
+  --production-blue-900: #001433;
+  --production-blue-950: #000a1a;
+  
+  --background: 220 20% 98%;
+  --foreground: 220 10% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 10% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 10% 10%;
+  --primary: 220 100% 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 180 100% 50%;
+  --secondary-foreground: 220 20% 10%;
+  --muted: 220 10% 95%;
+  --muted-foreground: 220 5% 45%;
+  --accent: 180 100% 50%;
+  --accent-foreground: 220 20% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 15% 85%;
+  --input: 220 15% 90%;
+  --ring: 220 100% 50%;
+  --radius: 0.75rem;
 }
 
-.btn-secondary {
-  @apply bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors font-medium;
+.dark {
+  --background: 220 20% 8%;
+  --foreground: 220 10% 95%;
+  --card: 220 20% 12%;
+  --card-foreground: 220 10% 95%;
+  --popover: 220 20% 12%;
+  --popover-foreground: 220 10% 95%;
+  --primary: 220 100% 60%;
+  --primary-foreground: 220 20% 8%;
+  --secondary: 180 100% 50%;
+  --secondary-foreground: 220 20% 8%;
+  --muted: 220 15% 20%;
+  --muted-foreground: 220 5% 65%;
+  --accent: 180 100% 50%;
+  --accent-foreground: 220 20% 8%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 15% 25%;
+  --input: 220 15% 20%;
+  --ring: 220 100% 60%;
 }
 
-.input-field {
-  @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
+/* Production background with gradient */
+.production-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    hsl(220 20% 98%) 0%,
+    hsl(220 15% 95%) 50%,
+    hsl(200 20% 97%) 100%
+  );
+  z-index: -1;
+  pointer-events: none;
 }
 
-.card {
-  @apply bg-white p-6 rounded-lg shadow-lg border border-gray-200;
+/* Overlay pattern for texture */
+.production-bg::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 1px 1px, rgba(0, 102, 255, 0.05) 1px, transparent 0);
+  background-size: 20px 20px;
+  pointer-events: none;
 }
 
-.loading-spinner {
-  @apply animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600;
+/* Production card styling */
+.production-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 102, 255, 0.2);
+  border-radius: 16px;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 102, 255, 0.1),
+    0 2px 4px -1px rgba(0, 102, 255, 0.06),
+    0 0 0 1px rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+}
+
+.production-card:hover {
+  box-shadow:
+    0 10px 15px -3px rgba(0, 102, 255, 0.15),
+    0 4px 6px -2px rgba(0, 102, 255, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+/* Production button styling */
+.production-btn {
+  background: linear-gradient(135deg, var(--production-blue-500), var(--production-blue-600));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 12px 24px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 102, 255, 0.2);
+}
+
+.production-btn:hover {
+  background: linear-gradient(135deg, var(--production-blue-600), var(--production-blue-700));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 102, 255, 0.3);
+}
+
+.production-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.production-btn-secondary {
+  background: linear-gradient(135deg, var(--production-teal-500), var(--production-teal-600));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 12px 24px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 212, 170, 0.2);
+}
+
+.production-btn-secondary:hover {
+  background: linear-gradient(135deg, var(--production-teal-600), var(--production-teal-700));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 212, 170, 0.3);
+}
+
+/* Production input styling */
+.production-input {
+  border: 2px solid var(--production-blue-200);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.production-input:focus {
+  border-color: var(--production-blue-500);
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+  outline: none;
+}
+
+.production-input::placeholder {
+  color: var(--production-blue-400);
+}
+
+/* Production badge styling */
+.production-badge {
+  background: var(--production-blue-100);
+  color: var(--production-blue-800);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--production-blue-200);
+}
+
+/* Glow effects */
+.glow-blue {
+  box-shadow: 0 0 20px rgba(0, 102, 255, 0.5);
+}
+
+.glow-teal {
+  box-shadow: 0 0 20px rgba(0, 212, 170, 0.5);
+}
+
+/* Pulse animation for loading states */
+@keyframes production-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.production-pulse {
+  animation: production-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Responsive Design Improvements */
+@media (max-width: 768px) {
+  .production-card {
+    margin: 0.5rem;
+    padding: 1rem;
+  }
+
+  .production-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .production-card {
+    border-radius: 12px;
+    padding: 0.75rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .production-card {
+    border: 2px solid var(--production-blue-400);
+  }
+
+  .production-btn {
+    border: 2px solid var(--production-blue-600);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .production-card,
+  .production-btn,
+  .production-btn-secondary {
+    transition: none;
+  }
+
+  .production-pulse {
+    animation: none;
+  }
 }
 

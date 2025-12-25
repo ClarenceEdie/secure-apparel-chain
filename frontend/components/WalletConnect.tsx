@@ -5,6 +5,7 @@ import { useConnect, useDisconnect, useAccount, useChainId } from "wagmi";
 import { injected } from "wagmi/connectors";
 
 export const WalletConnect = () => {
+  const [mounted, setMounted] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionError, setConnectionError] = useState<string>("");
   const [retryCount, setRetryCount] = useState(0);
@@ -14,6 +15,11 @@ export const WalletConnect = () => {
   const { disconnect } = useDisconnect();
   const { address, isConnected, connector } = useAccount();
   const chainId = useChainId();
+
+  // Ensure component is mounted on client side to avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Check if browser supports Ethereum
   const isEthereumSupported = typeof window !== "undefined" && window.ethereum;
@@ -122,20 +128,43 @@ export const WalletConnect = () => {
     handleConnect();
   };
 
+  // Prevent hydration mismatch by ensuring consistent initial render
+  if (!mounted) {
+    return (
+      <div className="production-card p-6 flex flex-col items-center space-y-4 max-w-md">
+        <button
+          disabled
+          className="production-btn w-full flex items-center justify-center opacity-50"
+        >
+          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Connect Wallet
+        </button>
+      </div>
+    );
+  }
+
   if (isConnected && address) {
     return (
-      <div className="flex items-center space-x-4">
-        <div className="text-sm text-gray-600">
-          Connected: {address.slice(0, 6)}...{address.slice(-4)}
-          {connector && (
-            <span className="ml-2 text-xs text-gray-500">
-              ({connector.name})
+      <div className="production-card p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-3 h-3 rounded-full bg-production-teal-500 animate-pulse"></div>
+          <div className="text-sm">
+            <span className="text-muted-foreground">Connected: </span>
+            <span className="font-mono font-semibold text-foreground">
+              {address.slice(0, 6)}...{address.slice(-4)}
             </span>
-          )}
+            {connector && (
+              <span className="ml-2 text-xs text-muted-foreground">
+                ({connector.name})
+              </span>
+            )}
+          </div>
         </div>
         <button
           onClick={handleDisconnect}
-          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all font-medium shadow-sm hover:shadow-md"
         >
           Disconnect
         </button>
@@ -144,9 +173,9 @@ export const WalletConnect = () => {
   }
 
   return (
-    <div className="flex flex-col items-center space-y-2">
+    <div className="production-card p-6 flex flex-col items-center space-y-4 max-w-md">
       {connectionError && (
-        <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded border border-red-200 max-w-xs">
+        <div className="w-full text-sm text-destructive bg-red-50 px-4 py-3 rounded-lg border border-red-200">
           {connectionError}
         </div>
       )}
@@ -154,7 +183,7 @@ export const WalletConnect = () => {
       <button
         onClick={handleConnect}
         disabled={isConnecting || isRetrying}
-        className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors font-medium flex items-center"
+        className="production-btn w-full flex items-center justify-center"
       >
         {isRetrying ? (
           <>
@@ -167,21 +196,26 @@ export const WalletConnect = () => {
             Connecting...
           </>
         ) : (
-          "Connect Wallet"
+          <>
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            Connect Wallet
+          </>
         )}
       </button>
 
       {connectionError && retryCount >= 3 && (
         <button
           onClick={handleRetry}
-          className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors text-sm"
+          className="px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-all text-sm font-medium"
         >
           Try Again
         </button>
       )}
 
       {!isEthereumSupported && (
-        <p className="text-xs text-gray-500 text-center max-w-xs">
+        <p className="text-xs text-muted-foreground text-center">
           No Web3 wallet detected. Please install MetaMask or another Web3 wallet to continue.
         </p>
       )}

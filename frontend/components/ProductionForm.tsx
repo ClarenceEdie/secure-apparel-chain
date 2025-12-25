@@ -43,34 +43,34 @@ export const ProductionForm = ({ onSubmit, isSubmitting = false }: ProductionFor
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-lg border-2 border-gray-200">
-      <h2 className="text-xl font-semibold mb-4 text-gray-800">Production Data Input</h2>
+    <div className="production-card p-6 md:p-8">
+      <h2 className="text-xl font-semibold mb-6 text-foreground">Production Data Input</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Yesterday's Production
             </label>
             <input
               type="number"
               value={yesterdayValue}
               onChange={(e) => setYesterdayValue(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="production-input w-full"
               placeholder="Enter yesterday's production"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Today's Production
             </label>
             <input
               type="number"
               value={todayValue}
               onChange={(e) => setTodayValue(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="production-input w-full"
               placeholder="Enter today's production"
               required
             />
@@ -80,7 +80,7 @@ export const ProductionForm = ({ onSubmit, isSubmitting = false }: ProductionFor
         <button
           type="submit"
           disabled={isSubmitting || !yesterdayValue || !todayValue}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center"
+          className="production-btn w-full flex items-center justify-center"
         >
           {isSubmitting ? (
             <>
