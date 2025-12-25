@@ -21,6 +21,9 @@ __turbopack_context__.s([
 var __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f40$rainbow$2d$me$2f$rainbowkit$2f$dist$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i("[project]/frontend/node_modules/@rainbow-me/rainbowkit/dist/index.js [app-ssr] (ecmascript) <locals>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$viem$2f$_esm$2f$chains$2f$definitions$2f$sepolia$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/frontend/node_modules/viem/_esm/chains/definitions/sepolia.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$viem$2f$_esm$2f$chains$2f$definitions$2f$hardhat$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/frontend/node_modules/viem/_esm/chains/definitions/hardhat.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$viem$2f$_esm$2f$chains$2f$definitions$2f$polygon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/frontend/node_modules/viem/_esm/chains/definitions/polygon.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$viem$2f$_esm$2f$chains$2f$definitions$2f$polygonMumbai$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/frontend/node_modules/viem/_esm/chains/definitions/polygonMumbai.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$viem$2f$_esm$2f$chains$2f$definitions$2f$mainnet$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/frontend/node_modules/viem/_esm/chains/definitions/mainnet.js [app-ssr] (ecmascript)");
 ;
 ;
 const config = (0, __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f40$rainbow$2d$me$2f$rainbowkit$2f$dist$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__["getDefaultConfig"])({
@@ -28,7 +31,10 @@ const config = (0, __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$n
     projectId: 'YOUR_PROJECT_ID',
     chains: [
         __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$viem$2f$_esm$2f$chains$2f$definitions$2f$sepolia$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["sepolia"],
-        __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$viem$2f$_esm$2f$chains$2f$definitions$2f$hardhat$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["hardhat"]
+        __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$viem$2f$_esm$2f$chains$2f$definitions$2f$hardhat$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["hardhat"],
+        __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$viem$2f$_esm$2f$chains$2f$definitions$2f$polygonMumbai$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["polygonMumbai"],
+        __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$viem$2f$_esm$2f$chains$2f$definitions$2f$polygon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["polygon"],
+        __TURBOPACK__imported__module__$5b$project$5d2f$frontend$2f$node_modules$2f$viem$2f$_esm$2f$chains$2f$definitions$2f$mainnet$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["mainnet"] // Ethereum mainnet
     ],
     ssr: false
 });
@@ -184,6 +190,17 @@ function ErrorSuppressor() {
             if (message.includes('Analytics SDK') || fullMessage.includes('Analytics SDK') || message.includes('cca-lite.coinbase.com')) {
                 return;
             }
+            // Suppress FHEVM-related network errors
+            if (message.includes('fhevm') || fullMessage.includes('fhevm') || message.includes('Fully Homomorphic Encryption') || fullMessage.includes('Fully Homomorphic Encryption')) {
+                return;
+            }
+            // Suppress wallet connection errors that are not critical
+            if (message.includes('MetaMask') || fullMessage.includes('MetaMask') || message.includes('wallet') || fullMessage.includes('wallet')) {
+                // Only suppress if it's a connection timeout or network issue
+                if (message.includes('timeout') || message.includes('network') || message.includes('connection')) {
+                    return;
+                }
+            }
             // Only log non-suppressed errors
             originalError(...args);
         };
@@ -221,8 +238,15 @@ function ErrorSuppressor() {
         const resourceErrorHandler = (event)=>{
             const target = event.target;
             if (target && (target.tagName === 'SCRIPT' || target.tagName === 'LINK' || target.tagName === 'IMG')) {
-                const src = target.src || '';
-                if (src.includes('cca-lite.coinbase.com') || src.includes('relayer.testnet.zama.cloud')) {
+                let url = '';
+                if (target.tagName === 'SCRIPT') {
+                    url = target.src || '';
+                } else if (target.tagName === 'IMG') {
+                    url = target.src || '';
+                } else if (target.tagName === 'LINK') {
+                    url = target.href || '';
+                }
+                if (url.includes('cca-lite.coinbase.com') || url.includes('relayer.testnet.zama.cloud')) {
                     event.preventDefault();
                     event.stopPropagation();
                     return false;

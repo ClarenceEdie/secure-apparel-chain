@@ -2747,10 +2747,17 @@ function getImageProps(imgProps) {
             ]),
             "path": ("TURBOPACK compile-time value", "/_next/image"),
             "loader": ("TURBOPACK compile-time value", "default"),
-            "dangerouslyAllowSVG": ("TURBOPACK compile-time value", false),
+            "dangerouslyAllowSVG": ("TURBOPACK compile-time value", true),
             "unoptimized": ("TURBOPACK compile-time value", false),
-            "domains": ("TURBOPACK compile-time value", []),
-            "remotePatterns": ("TURBOPACK compile-time value", [])
+            "domains": ("TURBOPACK compile-time value", [
+                ("TURBOPACK compile-time value", "localhost")
+            ]),
+            "remotePatterns": ("TURBOPACK compile-time value", [
+                ("TURBOPACK compile-time value", {
+                    "protocol": ("TURBOPACK compile-time value", "https"),
+                    "hostname": ("TURBOPACK compile-time value", "**")
+                })
+            ])
         })
     });
     // Normally we don't care about undefined props because we pass to JSX,
